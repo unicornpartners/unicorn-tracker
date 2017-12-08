@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A Lambda function for tracking unicorn emails via SES.
+Parameters:
+  TrackerEmailDomain:
+    Description: Email domain configured in SES for tracking
+    Type: String
+
+  SlackHookUrl:
+    Description: The URL for an incoming Slack webhook used to send notifications
+    Type: String
+
+  SlackChannel:
+    Description: 'The Slack channel name prefixed with # where notifications should be sent'
+    Type: String
+
+Resources:
+  SesHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: ./unicorn-tracker
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Table
+      Environment:
+        Variables:
+          UNICORN_TABLE: !Ref Table
+          RECIPIENT_DOMAIN: !Ref TrackerEmailDomain
+          SLACK_HOOK_URL: !Ref SlackHookUrl
+          SLACK_CHANNEL: !Ref SlackChannel
+  Table:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: Alias
+        Type: String
